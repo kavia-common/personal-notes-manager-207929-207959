@@ -1,49 +1,125 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useMemo, useState } from "react";
+import "./index.css";
+import "./App.css";
+import Header from "./components/Header";
+import NotesList from "./components/NotesList";
+import NoteEditor from "./components/NoteEditor";
+import EmptyState from "./components/EmptyState";
+import { NotesService } from "./services/NotesService";
+import { getFeatureFlags } from "./utils/featureFlags";
+import { applyCSSVariables } from "./theme";
 
 // PUBLIC_INTERFACE
-function App() {
-  const [theme, setTheme] = useState('light');
-
-  // Effect to apply theme to document element
+export default function App() {
+  // Apply theme variables once
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+    applyCSSVariables();
+    document.body.style.background = "var(--ocean-bg)";
+    document.body.style.color = "var(--ocean-text)";
+  }, []);
 
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  const flags = useMemo(() => getFeatureFlags(), []);
+  const [service] = useState(() => new NotesService());
+  const [notes, setNotes] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+
+  // Initial load
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await service.list();
+        if (!alive) return;
+        setNotes(data);
+        if (data.length > 0) setSelectedId(data[0].id);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [service]);
+
+  const selected = useMemo(
+    () => notes.find((n) => n.id === selectedId) || null,
+    [notes, selectedId]
+  );
+
+  async function refresh(selectId = null) {
+    const data = await service.list();
+    setNotes(data);
+    if (selectId) setSelectedId(selectId);
+  }
+
+  async function handleCreate() {
+    const created = await service.create({ title: "Untitled", body: "" });
+    await refresh(created.id);
+  }
+
+  async function handleDelete(id) {
+    const target = notes.find(n => n.id === id);
+    const name = target?.title || "this note";
+    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    await service.remove(id);
+    await refresh(
+      id === selectedId
+        ? notes.find((n) => n.id !== id)?.id || null
+        : selectedId
+    );
+  }
+
+  async function handleUpdateBody(body) {
+    if (!selected) return;
+    const updated = await service.update(selected.id, { body });
+    setNotes(prev => prev.map(n => (n.id === updated.id ? updated : n)));
+  }
+
+  async function handleUpdateTitle(title) {
+    if (!selected) return;
+    const updated = await service.update(selected.id, { title });
+    setNotes(prev => prev.map(n => (n.id === updated.id ? updated : n)));
+  }
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app-wrap">
+      <Header />
+      <main className="main-layout">
+        <NotesList
+          notes={notes}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onCreate={handleCreate}
+          onDelete={handleDelete}
+          searchEnabled={flags.search}
+          query={query}
+          setQuery={setQuery}
+          loading={loading}
+        />
+        <div className="editor-wrap">
+          {notes.length === 0 && !loading ? (
+            <EmptyState onCreate={handleCreate} />
+          ) : (
+            <NoteEditor
+              note={selected}
+              onChange={handleUpdateBody}
+              onTitleChange={handleUpdateTitle}
+              autosave={flags.autosave}
+            />
+          )}
+        </div>
+      </main>
+      <footer className="footer">
+        <span>
+          Data layer: {service.useApi ? "Remote API" : "LocalStorage"}
+        </span>
+      </footer>
     </div>
   );
 }
-
-export default App;

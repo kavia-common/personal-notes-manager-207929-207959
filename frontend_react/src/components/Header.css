@@ -1,0 +1,51 @@
+.ocean-header {
+  background: linear-gradient(180deg, var(--ocean-gradient-start), var(--ocean-gradient-end));
+  border-bottom: 1px solid var(--ocean-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+}
+
+.ocean-header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ocean-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ocean-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ocean-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+.ocean-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ocean-text);
+}
+
+.ocean-actions .ocean-help {
+  color: var(--ocean-primary);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--ocean-radius-sm);
+  transition: var(--ocean-transition);
+}
+
+.ocean-actions .ocean-help:hover {
+  background: var(--ocean-muted);
+}

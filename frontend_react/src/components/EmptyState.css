@@ -1,0 +1,33 @@
+.empty-wrap {
+  padding: 24px;
+}
+
+.empty-card {
+  background: var(--ocean-surface);
+  border: 1px solid var(--ocean-border);
+  border-radius: var(--ocean-radius-lg);
+  padding: 28px;
+  text-align: center;
+  box-shadow: var(--ocean-shadow-md);
+}
+
+.empty-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(37, 99, 235, 0.1);
+  margin-bottom: 12px;
+  font-size: 24px;
+}
+
+.empty-card h2 {
+  margin: 0 0 8px 0;
+  color: var(--ocean-text);
+}
+
+.empty-card p {
+  margin: 0 0 16px 0;
+  color: var(--ocean-text-secondary);
+}
